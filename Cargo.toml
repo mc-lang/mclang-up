@@ -1,8 +1,15 @@
 [package]
 name = "mclang-up"
+description="The McLang programming language updater and installer"
 version = "0.1.0"
 edition = "2021"
+authors=[
+    "MCorange <mcorangecodes@gmail.com> (mcorangehq.xyz)",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.1.8", features = ["derive"] }
+color-eyre = "0.6.2"
+eyre = "0.6.8"
