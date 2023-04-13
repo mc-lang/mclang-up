@@ -2,7 +2,7 @@ mod install;
 mod util;
 
 
-use clap::{Parser, Arg};
+use clap::Parser;
 use color_eyre::Result;
 
 
@@ -46,6 +46,8 @@ fn main() -> Result<()>{
             error!("Update failed");
             return Ok(());
         }
+    } else {
+        error!("No arguments provided");
     }
     Ok(())
 }
