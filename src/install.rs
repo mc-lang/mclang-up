@@ -1,9 +1,9 @@
 use std::{path::{PathBuf, Path}, process::{Command, Stdio}};
-use crate::{util::Prompt, info, code_block, help, cmd, warn};
 use color_eyre::Result;
 use eyre::eyre;
 
-use crate::{Args, error};
+use crate::{util::Prompt, Args};
+
 
 const MCLANGC_GIT: &str = "https://github.com/mc-lang/mclangc.git";
 const MCLANG_UP_GIT: &str = "https://github.com/mc-lang/mclang-up.git";
@@ -20,40 +20,40 @@ pub fn install(args: &Args) -> Result<()> {
         return Err(eyre!(""));
     }
 
-    info!("Beginning installation of mclang {install_branch} to {install_path:?}");
+    log::info!("Beginning installation of mclang {install_branch} to {install_path:?}");
 
-    info!("Checking dependencies");
+    log::info!("Checking dependencies");
     check_if_installed(args,"nasm");
     check_if_installed(args,"git");
     check_if_installed(args,"cargo");
 
-    info!("Creating '{install_path_str}' if it doesnt exist");
+    log::info!("Creating '{install_path_str}' if it doesnt exist");
 
     run_cmd(args, PathBuf::from("./"), "mkdir", vec!["-p", install_path_str])?;
     run_cmd(args, PathBuf::from("./"), "mkdir", vec!["-p", format!("{}{}", install_path_str, "/components").as_str()])?;
 
-    info!("Cleaning out old versions");
+    log::info!("Cleaning out old versions");
 
     run_cmd(args, install_path.join("components"), "rm", vec!["-rf", "./mclangc", "./mclang-up", "./mclang-pkm"])?;
     run_cmd(args, install_path.clone(), "rm", vec!["-rf", "./stdlib"])?;
 
-    info!("Cloning component repositories");
+    log::info!("Cloning component repositories");
 
     run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANGC_GIT])?;
     run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANG_UP_GIT])?;
     run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANG_PKM_GIT])?;
     
-    info!("Compiling mclangc");
+    log::info!("Compiling mclangc");
     run_cmd(args, install_path.join("components/mclangc"), "cargo", vec!["build", "--release"])?;
-    info!("Compiling mclang-up");
+    log::info!("Compiling mclang-up");
     run_cmd(args, install_path.join("components/mclang-up"), "cargo", vec!["build", "--release"])?;
-    info!("Compiling mclang-pkm");
+    log::info!("Compiling mclang-pkm");
     run_cmd(args, install_path.join("components/mclang-pkm"), "cargo", vec!["build", "--release"])?;
 
-    info!("Creating '{install_path_str}/bin'");
-    run_cmd(args, install_path.clone(), "mkdir", vec!["-p", ",/bin"])?;
+    log::info!("Creating '{install_path_str}/bin'");
+    run_cmd(args, install_path.clone(), "mkdir", vec!["-p", "./bin"])?;
     
-    info!("Copying binaries to '{install_path_str}/bin'");
+    log::info!("Copying binaries to '{install_path_str}/bin'");
     run_cmd(args, install_path.clone(), "cp", vec!["-f", 
         "./components/mclangc/target/release/mclangc",
         "./components/mclang-up/target/release/mclang-up",
@@ -61,17 +61,17 @@ pub fn install(args: &Args) -> Result<()> {
         "./bin"
     ])?;
     
-    info!("Creating '{install_path_str}/stdlib'");
+    log::info!("Creating '{install_path_str}/stdlib'");
     run_cmd(args, install_path.clone(), "mkdir", vec!["-p", "./stdlib"])?;
 
-    info!("Copying standart lib to '{install_path_str}/stdlib'");
+    log::info!("Copying standart lib to '{install_path_str}/stdlib'");
 
     
     copy_dir_all(format!("{install_path_str}/components/mclangc/include"), format!("{install_path_str}/stdlib")).unwrap();
 
-    warn!("Before you can use MCLang you have to put 'export PATH=\"$PATH:{install_path_str}/bin\"' in your .bashrc or .zshrc (for fish shell it is diffrent)");
+    log::warn!("Before you can use MCLang you have to put 'export PATH=\"$PATH:{install_path_str}/bin\"' in your .bashrc or .zshrc (for fish shell it is diffrent)");
 
-    info!("MCLang was successfully installed");
+    log::info!("MCLang was successfully installed");
     Ok(())
 }
 
@@ -84,29 +84,29 @@ pub fn update(args: &Args) -> Result<()> {
     if !Prompt::bool("Are you sure you want to proceed? This may delete your files if you put any in the mclang install location", Some(false))? {
         return Err(eyre!(""));
     }
-    info!("Beginning update of mclang {install_branch} to {install_path:?}");
+    log::info!("Beginning update of mclang {install_branch} to {install_path:?}");
 
-    info!("Checking dependencies");
+    log::info!("Checking dependencies");
     check_if_installed(args,"nasm");
     check_if_installed(args,"git");
     check_if_installed(args,"cargo");
 
 
-    info!("Cloning component repositories");
+    log::info!("Cloning component repositories");
 
     run_cmd(args, install_path.join("components/mclangc"), "git", vec!["pull", "origin", &install_branch])?;
     run_cmd(args, install_path.join("components/mclang-up"), "git", vec!["pull", "origin", &install_branch])?;
     run_cmd(args, install_path.join("components/mclang-pkm"), "git", vec!["pull", "origin", &install_branch])?;
     
-    info!("Compiling mclangc");
+    log::info!("Compiling mclangc");
     run_cmd(args, install_path.join("components/mclangc"), "cargo", vec!["build", "--release"])?;
-    info!("Compiling mclang-up");
+    log::info!("Compiling mclang-up");
     run_cmd(args, install_path.join("components/mclang-up"), "cargo", vec!["build", "--release"])?;
-    info!("Compiling mclang-pkm");
+    log::info!("Compiling mclang-pkm");
     run_cmd(args, install_path.join("components/mclang-pkm"), "cargo", vec!["build", "--release"])?;
 
     
-    info!("Copying binaries to '{install_path_str}/bin'");
+    log::info!("Copying binaries to '{install_path_str}/bin'");
     run_cmd(args, install_path.clone(), "cp", vec!["-f", 
         "./components/mclangc/target/release/mclangc",
         "./components/mclang-up/target/release/mclang-up",
@@ -114,11 +114,11 @@ pub fn update(args: &Args) -> Result<()> {
         "./bin"
     ])?;
     
-    info!("Copying standart lib to '{install_path_str}/stdlib'");
+    log::info!("Copying standart lib to '{install_path_str}/stdlib'");
     
     copy_dir_all(format!("{install_path_str}/components/mclangc/include"), format!("{install_path_str}/stdlib")).unwrap();
 
-    info!("MCLang was successfully updated");
+    log::info!("MCLang was successfully updated");
     Ok(())
 }
 
@@ -128,24 +128,24 @@ pub fn check_if_installed(args: &Args, prog: &str) {
         .stderr(Stdio::null())
         .spawn().is_ok() {
         if args.verbose {
-            info!("Program {prog:?} was found.");
+            log::info!("Program {prog:?} was found.");
         }
     } else {
-        error!("Program {prog:?} could not be found.");
+        log::error!("Program {prog:?} could not be found.");
         if prog == "cargo" {
-            help!("To install the rust toolchain folow the instructions on https://rustup.rs/");
-            help!("Or run `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`")
+            log::info!("To install the rust toolchain folow the instructions on https://rustup.rs/");
+            log::info!("Or run `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`")
         } else {   
-            help!("Install {prog:?} with your distributions package manager.");
-            help!("    Ubuntu/Debian: sudo apt install {prog}");
-            help!("    Arch: sudo pacman -Sy {prog}");
+            log::info!("Install {prog:?} with your distributions package manager.");
+            log::info!("    Ubuntu/Debian: sudo apt install {prog}");
+            log::info!("    Arch: sudo pacman -Sy {prog}");
         }
     }
 }
 
 pub fn run_cmd(args: &Args, cwd: PathBuf, prog: &str, cmd: Vec<&str>) -> Result<()>{
     if args.verbose {
-        cmd!("Running '{prog} {}'", cmd.join(" "));
+        log::info!("Running '{prog} {}'", cmd.join(" "));
     }
 
     let mut command = Command::new(prog);
@@ -170,21 +170,21 @@ pub fn run_cmd(args: &Args, cwd: PathBuf, prog: &str, cmd: Vec<&str>) -> Result<
                 let stderr = String::from_utf8_lossy(&out.stderr);
                 
                 if !stdout.is_empty() {
-                    cmd!("STDOUT:\n{}", code_block!("{}", stdout));
+                    log::info!("STDOUT:\n{}", crate::util::code_block(format!("{}", stdout).as_str()));
                 }
                 if !stderr.is_empty() {
-                    cmd!("STDERR:\n{}", code_block!("{}", stderr));
+                    log::info!("STDERR:\n{}", crate::util::code_block(format!("{}", stderr).as_str()));
                 }
-                cmd!("Exited with status code: {code}");
+                log::info!("Exited with status code: {code}");
                 return Err(eyre!(""));
             } else {
                 if args.verbose {
-                    cmd!("Exited with status code: {code}")
+                    log::info!("Exited with status code: {code}")
                 }
             }
         },
         None => {
-            cmd!("Process terminated by signal");
+            log::info!("Process terminated by signal");
             return Err(eyre!(""));
         }
     }
@@ -205,7 +205,7 @@ fn get_install_branch() -> Result<String>{
     match p.as_str() {
         "dev" | "stable" => (),
         s => {
-            error!("Unknown value {s:?}, please answer 'dev' or 'stable'");
+            log::error!("Unknown value {s:?}, please answer 'dev' or 'stable'");
             return Err(eyre!(""));
         }
     }

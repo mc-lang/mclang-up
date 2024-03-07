@@ -32,22 +32,25 @@ pub struct Args {
 
 }
 
-fn main() -> Result<()>{
+fn main() -> Result<()> {
+    simple_logger::SimpleLogger::new().without_timestamps().init()?;
+
+
     let args = Args::parse();
 
 
     if args.install {
         if let Err(_) = install::install(&args) {
-            error!("Instalation failed");
+            log::error!("Instalation failed");
             return Ok(());
         }
     } else if  args.update {
         if let Err(_) = install::update(&args) {
-            error!("Update failed");
+            log::error!("Update failed");
             return Ok(());
         }
     } else {
-        error!("No arguments provided");
+        log::error!("No arguments provided");
     }
     Ok(())
 }

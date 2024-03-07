@@ -1,7 +1,10 @@
+// use std::io::Write;
+
 use std::io::Write;
 
 use color_eyre::Result;
-use eyre::eyre;
+use eyre::bail;
+// use eyre::eyre;
 
 pub mod color {
     #![allow(dead_code)]
@@ -31,55 +34,66 @@ pub mod color {
     pub const BG_WHITE: &str = "\x1b[47m";
 }
 
-pub mod logger {
-    #![allow(dead_code)]
-    use crate::util::color;
+// pub mod logger {
+//     #![allow(dead_code)]
+//     use crate::util::color;
 
-    pub fn error(msg: &str) {
-        println!("{red}error{r}: {msg}", red=color::FG_RED, r=color::RESET);
-    }
+//     pub fn log::error(msg: &str) {
+//         println!("{red}log::error{r}: {msg}", red=color::FG_RED, r=color::RESET);
+//     }
 
-    pub fn warn(msg: &str) {
-        println!("{yellow}warn{r}: {msg}", yellow=color::FG_YELLOW, r=color::RESET);
-    }
+//     pub fn warn(msg: &str) {
+//         println!("{yellow}warn{r}: {msg}", yellow=color::FG_YELLOW, r=color::RESET);
+//     }
     
-    pub fn info(msg: &str) {
-        println!("{green}info{r}: {msg}", green=color::FG_GREEN, r=color::RESET);
-    }
+//     pub fn info(msg: &str) {
+//         println!("{green}info{r}: {msg}", green=color::FG_GREEN, r=color::RESET);
+//     }
 
-    pub fn note(msg: &str) {
-        println!("{blue}note{r}: {msg}", blue=color::FG_BLUE, r=color::RESET);
-    }
+//     pub fn note(msg: &str) {
+//         println!("{blue}note{r}: {msg}", blue=color::FG_BLUE, r=color::RESET);
+//     }
 
 
-    pub fn help(msg: &str) {
-        println!("{blue}help{r}: {msg}", blue=color::FG_CYAN, r=color::RESET);
-    }
-    pub fn cmd(msg: &str) {
-        println!("{blue}cmd{r}: {msg}", blue=color::FG_MAGENTA, r=color::RESET);
-    }
+//     pub fn help(msg: &str) {
+//         println!("{blue}help{r}: {msg}", blue=color::FG_CYAN, r=color::RESET);
+//     }
+//     pub fn cmd(msg: &str) {
+//         println!("{blue}cmd{r}: {msg}", blue=color::FG_MAGENTA, r=color::RESET);
+//     }
 
-    pub fn code_block(code: &str) -> String {
-        let mut ret = String::new();
-        let lines = code.lines();
+//     pub fn code_block(code: &str) -> String {
+//         let mut ret = String::new();
+//         let lines = code.lines();
 
-        for (i, line) in lines.enumerate() {
-            use std::fmt::Write;
-            writeln!(ret, "{}{} | {}{}",color::FG_BLUE, i + 1, line, color::RESET).unwrap();
-        }
-        ret
-    }
-    pub mod macros {
-        #[macro_export] macro_rules! error { ($($arg:tt)*) => { $crate::util::logger::error(std::format_args!($($arg)*).to_string().as_str()) }; }
-        #[macro_export] macro_rules! warn { ($($arg:tt)*) => {  $crate::util::logger::warn( std::format_args!($($arg)*).to_string().as_str()) }; }
-        #[macro_export] macro_rules! info { ($($arg:tt)*) => {  $crate::util::logger::info( std::format_args!($($arg)*).to_string().as_str()) }; }
-        #[macro_export] macro_rules! note { ($($arg:tt)*) => {  $crate::util::logger::note( std::format_args!($($arg)*).to_string().as_str()) }; }
+//         for (i, line) in lines.enumerate() {
+//             use std::fmt::Write;
+//             writeln!(ret, "{}{} | {}{}",color::FG_BLUE, i + 1, line, color::RESET).unwrap();
+//         }
+//         ret
+//     }
+//     pub mod macros {
+//         #[macro_export] macro_rules! log::error { ($($arg:tt)*) => { $crate::util::logger::log::error(std::format_args!($($arg)*).to_string().as_str()) }; }
+//         #[macro_export] macro_rules! warn { ($($arg:tt)*) => {  $crate::util::logger::warn( std::format_args!($($arg)*).to_string().as_str()) }; }
+//         #[macro_export] macro_rules! info { ($($arg:tt)*) => {  $crate::util::logger::info( std::format_args!($($arg)*).to_string().as_str()) }; }
+//         #[macro_export] macro_rules! note { ($($arg:tt)*) => {  $crate::util::logger::note( std::format_args!($($arg)*).to_string().as_str()) }; }
         
-        #[macro_export] macro_rules! help { ($($arg:tt)*) => {  $crate::util::logger::help( std::format_args!($($arg)*).to_string().as_str()) }; }
-        #[macro_export] macro_rules! cmd { ($($arg:tt)*) => {  $crate::util::logger::cmd( std::format_args!($($arg)*).to_string().as_str()) }; }
-        #[macro_export] macro_rules! code_block { ($($arg:tt)*) => {  $crate::util::logger::code_block( std::format_args!($($arg)*).to_string().as_str()) }; }
-    }
+//         #[macro_export] macro_rules! help { ($($arg:tt)*) => {  $crate::util::logger::help( std::format_args!($($arg)*).to_string().as_str()) }; }
+//         #[macro_export] macro_rules! cmd { ($($arg:tt)*) => {  $crate::util::logger::cmd( std::format_args!($($arg)*).to_string().as_str()) }; }
+//         #[macro_export] macro_rules! code_block { ($($arg:tt)*) => {  $crate::util::logger::code_block( std::format_args!($($arg)*).to_string().as_str()) }; }
+//     }
 
+// }
+
+pub fn code_block(code: &str) -> String {
+    let mut ret = String::new();
+    let lines = code.lines();
+
+    for (i, line) in lines.enumerate() {
+        use std::fmt::Write;
+        writeln!(ret, "{}{} | {}{}",color::FG_BLUE, i + 1, line, color::RESET).unwrap();
+    }
+    ret
 }
 
 pub struct Prompt {}
@@ -92,7 +106,6 @@ impl Prompt {
     }
     
     pub fn bool(msg: &str, default: Option<bool>) -> Result<bool> {
-        use crate::error;
         
         let r = if let Some(default) = default {
             if default {
@@ -101,8 +114,8 @@ impl Prompt {
                     "" | "y" | "yes" | "true" | "ye" | "t" => true,
                     "n" | "no" | "false" | "nah" | "f" => false,
                     s => {
-                        error!("Unknown value {s:?}, please answer 'yes' or 'no'");
-                        return Err(eyre!(""));
+                        log::error!("Unknown value {s:?}, please answer 'yes' or 'no'");
+                        bail!("")
                     }
                 }
             } else {
@@ -111,8 +124,8 @@ impl Prompt {
                     "y" | "yes" | "true" | "ye" | "t" => true,
                     "" | "n" | "no" | "false" | "nah" | "f" => false,
                     s => {
-                        error!("Unknown value {s:?}, please answer 'yes' or 'no'");
-                        return Err(eyre!(""));
+                        log::error!("Unknown value {s:?}, please answer 'yes' or 'no'");
+                        bail!("")
                     }
                 }
             }
@@ -122,8 +135,8 @@ impl Prompt {
                 "y" | "yes" | "true" | "ye" | "t" => true,
                 "n" | "no" | "false" | "nah" | "f" => false,
                 s => {
-                    error!("Unknown value {s:?}, please answer 'yes' or 'no'");
-                    return Err(eyre!(""));
+                    log::error!("Unknown value {s:?}, please answer 'yes' or 'no'");
+                    bail!("")
                 }
             }
         };
