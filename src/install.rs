@@ -8,6 +8,7 @@ use crate::{util::Prompt, Args};
 const MCLANGC_GIT: &str = "https://github.com/mc-lang/mclangc.git";
 const MCLANG_UP_GIT: &str = "https://github.com/mc-lang/mclang-up.git";
 const MCLANG_PKM_GIT: &str = "https://github.com/mc-lang/mclang-pkm.git";
+const LIBMC_GIT: &str = "https://github.com/mc-lang/libmc.git";
 
 
 pub fn install(args: &Args) -> Result<()> {
@@ -23,7 +24,6 @@ pub fn install(args: &Args) -> Result<()> {
     log::info!("Beginning installation of mclang {install_branch} to {install_path:?}");
 
     log::info!("Checking dependencies");
-    check_if_installed(args,"nasm");
     check_if_installed(args,"git");
     check_if_installed(args,"cargo");
 
@@ -33,22 +33,15 @@ pub fn install(args: &Args) -> Result<()> {
     run_cmd(args, PathBuf::from("./"), "mkdir", vec!["-p", format!("{}{}", install_path_str, "/components").as_str()])?;
 
     log::info!("Cleaning out old versions");
-
-    run_cmd(args, install_path.join("components"), "rm", vec!["-rf", "./mclangc", "./mclang-up", "./mclang-pkm"])?;
-    run_cmd(args, install_path.clone(), "rm", vec!["-rf", "./stdlib"])?;
+    run_cmd(args, install_path.join("components"), "rm", vec!["-rf", "./mclangc", "./mclang-up", "./mclang-pkm", "./libmc"])?;
 
     log::info!("Cloning component repositories");
 
-    run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANGC_GIT])?;
-    run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANG_UP_GIT])?;
-    run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, MCLANG_PKM_GIT])?;
-    
-    log::info!("Compiling mclangc");
-    run_cmd(args, install_path.join("components/mclangc"), "cargo", vec!["build", "--release"])?;
-    log::info!("Compiling mclang-up");
-    run_cmd(args, install_path.join("components/mclang-up"), "cargo", vec!["build", "--release"])?;
-    log::info!("Compiling mclang-pkm");
-    run_cmd(args, install_path.join("components/mclang-pkm"), "cargo", vec!["build", "--release"])?;
+    install_component(args, &install_path, &install_branch, MCLANGC_GIT, "mclangc")?;
+    install_component(args, &install_path, &install_branch, MCLANG_UP_GIT, "mclang-up")?;
+    install_component(args, &install_path, &install_branch, MCLANG_PKM_GIT, "mclang-pkm")?;
+    log::info!("Cloning libmc");
+    run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &install_branch, LIBMC_GIT])?;
 
     log::info!("Creating '{install_path_str}/bin'");
     run_cmd(args, install_path.clone(), "mkdir", vec!["-p", "./bin"])?;
@@ -60,20 +53,21 @@ pub fn install(args: &Args) -> Result<()> {
         "./components/mclang-pkm/target/release/mclang-pkm",
         "./bin"
     ])?;
-    
-    log::info!("Creating '{install_path_str}/stdlib'");
-    run_cmd(args, install_path.clone(), "mkdir", vec!["-p", "./stdlib"])?;
-
-    log::info!("Copying standart lib to '{install_path_str}/stdlib'");
-
-    
-    copy_dir_all(format!("{install_path_str}/components/mclangc/include"), format!("{install_path_str}/stdlib")).unwrap();
 
     log::warn!("Before you can use MCLang you have to put 'export PATH=\"$PATH:{install_path_str}/bin\"' in your .bashrc or .zshrc (for fish shell it is diffrent)");
 
     log::info!("MCLang was successfully installed");
     Ok(())
 }
+
+fn install_component(args: &Args, install_path: &PathBuf, branch: &String, git_url: &'static str, name: &'static str) -> Result<()>{
+    log::info!("Cloning {name}");
+    run_cmd(args, install_path.join("components"), "git", vec!["clone", "-b", &branch, git_url])?;
+    log::info!("Building {name}");
+    run_cmd(args, install_path.join(format!("components/{name}")), "cargo", vec!["build", "--release"])?;
+    Ok(())
+}
+
 
 pub fn update(args: &Args) -> Result<()> {
     
@@ -87,23 +81,16 @@ pub fn update(args: &Args) -> Result<()> {
     log::info!("Beginning update of mclang {install_branch} to {install_path:?}");
 
     log::info!("Checking dependencies");
-    check_if_installed(args,"nasm");
     check_if_installed(args,"git");
     check_if_installed(args,"cargo");
 
 
-    log::info!("Cloning component repositories");
+    update_component(args, &install_path, &install_branch, "mclangc")?;
+    update_component(args, &install_path, &install_branch, "mclang-up")?;
+    update_component(args, &install_path, &install_branch, "mclang-pkm")?;
+    log::info!("Installing libmc");
+    run_cmd(args, install_path.join(format!("components/libmc")), "git", vec!["pull", "origin", &install_branch])?;
 
-    run_cmd(args, install_path.join("components/mclangc"), "git", vec!["pull", "origin", &install_branch])?;
-    run_cmd(args, install_path.join("components/mclang-up"), "git", vec!["pull", "origin", &install_branch])?;
-    run_cmd(args, install_path.join("components/mclang-pkm"), "git", vec!["pull", "origin", &install_branch])?;
-    
-    log::info!("Compiling mclangc");
-    run_cmd(args, install_path.join("components/mclangc"), "cargo", vec!["build", "--release"])?;
-    log::info!("Compiling mclang-up");
-    run_cmd(args, install_path.join("components/mclang-up"), "cargo", vec!["build", "--release"])?;
-    log::info!("Compiling mclang-pkm");
-    run_cmd(args, install_path.join("components/mclang-pkm"), "cargo", vec!["build", "--release"])?;
 
     
     log::info!("Copying binaries to '{install_path_str}/bin'");
@@ -114,11 +101,16 @@ pub fn update(args: &Args) -> Result<()> {
         "./bin"
     ])?;
     
-    log::info!("Copying standart lib to '{install_path_str}/stdlib'");
-    
-    copy_dir_all(format!("{install_path_str}/components/mclangc/include"), format!("{install_path_str}/stdlib")).unwrap();
 
     log::info!("MCLang was successfully updated");
+    Ok(())
+}
+
+fn update_component(args: &Args, install_path: &PathBuf, branch: &String, name: &'static str) -> Result<()>{
+    log::info!("Updating {name}");
+    run_cmd(args, install_path.join(format!("components/{name}")), "git", vec!["pull", "origin", &branch])?;
+    log::info!("Building {name}");
+    run_cmd(args, install_path.join(format!("components/{name}")), "cargo", vec!["build", "--release"])?;
     Ok(())
 }
 
@@ -200,10 +192,10 @@ fn get_install_location() -> Result<PathBuf>{
 }
 
 fn get_install_branch() -> Result<String>{
-    
+
     let p = Prompt::default("Enter install branch, 'dev' or 'stable'", "stable")?;
     match p.as_str() {
-        "dev" | "stable" => (),
+        "dev" | "stable" | "main-v2" => (),
         s => {
             log::error!("Unknown value {s:?}, please answer 'dev' or 'stable'");
             return Err(eyre!(""));
